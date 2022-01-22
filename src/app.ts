@@ -13,9 +13,36 @@ app.use(function (req: App.Request, res: App.Response, next: App.NextFunction) {
   next();
 })
 
-app.get('/', function (req, res) {
-  res.send(req.dbConnection.getRepository(A).find());
+app.get('/', async function (req, res) {
+  const a = await req.dbConnection.getRepository(A).find()
+  return res.status(200).json(a);
 })
+
+app.get('/filtered', async function (req, res) {
+  const queryBuilder = req.dbConnection.getRepository(A).createQueryBuilder('a')
+  queryBuilder.leftJoinAndSelect('a.bs', 'b', '"b"."key" = \'1\'');
+
+  const r = await queryBuilder.getMany();
+  return res.status(200).json(r);
+})
+
+app.get('/ordered', async function (req, res) {
+  const queryBuilder = req.dbConnection.getRepository(A).createQueryBuilder('a')
+  queryBuilder.leftJoinAndSelect('a.bs', 'b');
+  queryBuilder.addSelect(
+    `CASE
+      WHEN "b"."key" = '1' THEN 0
+      ELSE NULL
+    END`,
+    'order_key'
+  );
+  queryBuilder.orderBy('order_key');
+
+  const r = await queryBuilder.getMany();
+  return res.status(200).json(r);
+})
+
+
 
 app.listen(process.env.PORT, () => {
   console.log(`server listening on port ${process.env.PORT}`)
