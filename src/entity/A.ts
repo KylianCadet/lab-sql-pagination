@@ -1,8 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, OneToMany } from "typeorm";
 import base from "./base";
+import B from './B'
 
 @Entity()
 export default class A extends base {
-  @Column()
-  test: number;
+  @OneToMany(() => B, b => b.a)
+  bs: B[];
 }

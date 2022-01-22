@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
+    "typeRoots": [
+      "./types",
+    ],
     "outDir": "./built",
-    "allowJs": true,
-    "target": "es5",
+    "target": "es6",
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
-  },
-  "include": [
-    "./src/**/*"
-  ]
+    "emitDecoratorMetadata": true,
+    "module": "commonjs"
+  }
 }
