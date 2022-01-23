@@ -42,6 +42,31 @@ app.get('/ordered', async function (req, res) {
   return res.status(200).json(r);
 })
 
+app.get('/paginated-offset-limit', async function (req, res) {
+  const page = req.query['page'] ? Number(req.query['page']) : 1
+  const item = req.query['item'] ? Number(req.query['item']) : 5
+  const queryBuilder = req.dbConnection.getRepository(A).createQueryBuilder('a')
+  queryBuilder.leftJoinAndSelect('a.bs', 'b');
+
+  queryBuilder.offset((page - 1) * item);
+  queryBuilder.limit(item);
+
+  const r = await queryBuilder.getMany();
+  return res.status(200).json(r);
+})
+
+app.get('/paginated-skip-take', async function (req, res) {
+  const page = req.query['page'] ? Number(req.query['page']) : 1
+  const item = req.query['item'] ? Number(req.query['item']) : 5
+  const queryBuilder = req.dbConnection.getRepository(A).createQueryBuilder('a')
+  queryBuilder.leftJoinAndSelect('a.bs', 'b');
+
+  queryBuilder.skip((page - 1) * item);
+  queryBuilder.take(item);
+
+  const r = await queryBuilder.getMany();
+  return res.status(200).json(r);
+})
 
 
 app.listen(process.env.PORT, () => {
