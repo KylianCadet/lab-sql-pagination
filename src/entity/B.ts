@@ -9,4 +9,7 @@ export default class B extends base {
 
   @Column()
   key: '1' | '2' | '3';
+
+  @Column()
+  value: number;
 }
