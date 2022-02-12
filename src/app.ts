@@ -2,7 +2,6 @@ import * as App from "express";
 import * as dotenv from "dotenv";
 import Config from "./config";
 import A from './entity/A'
-import B from './entity/B'
 
 dotenv.config({ path: '.env' })
 const app = App();
@@ -35,6 +34,24 @@ app.get('/ordered', async function (req, res) {
       ELSE NULL
     END
   `, 'ASC');
+
+  const r = await queryBuilder.getMany();
+  return res.status(200).json(r);
+})
+
+app.get('/paginated-ordered-custom-join', async function (req, res) {
+  const page = req.query['page'] ? Number(req.query['page']) : 1
+  const item = req.query['item'] ? Number(req.query['item']) : 5
+
+  const queryBuilder = req.dbConnection.getRepository(A).createQueryBuilder('a');
+  queryBuilder.leftJoinAndSelect('a.bs', 'b-filtered', "b-filtered.key = '1'");
+  queryBuilder.leftJoinAndSelect('a.bs', 'b');
+
+  queryBuilder.addOrderBy('b-filtered.value');
+  queryBuilder.addOrderBy('a.id');
+
+  queryBuilder.skip((page - 1) * item);
+  queryBuilder.take(item);
 
   const r = await queryBuilder.getMany();
   return res.status(200).json(r);
@@ -160,6 +177,7 @@ app.listen(process.env.PORT, () => {
 })
 
 
-// conditional OrderBy + skip / take ne marche pas
-// conditional OrderBy + offset / limit marche
+// conditional OrderBy + skip / take -> doesn't work
+// conditional OrderBy + offset / limit -> works
 // conditional addSelect + orderBy + skip / take -> undefined
+// multiple joined column with orderBy -> works
