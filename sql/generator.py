@@ -22,7 +22,7 @@ def generate_sql_file(A: int, B: int) -> str:
     for a in range(A):
         s += f"INSERT INTO A VALUES ({a});\n"
         for b in range(B):
-            s += f"INSERT INTO B VALUES ({b}, '{random.randint(1, 3)}', {random.randint(0, 100)}, {a});\n"
+            s += f"INSERT INTO B VALUES ({b+(a*B)}, '{random.randint(1, 3)}', {random.randint(0, 100)}, {a});\n"
     return s
 
 

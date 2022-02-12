@@ -2,19 +2,28 @@ import * as App from "express";
 import * as dotenv from "dotenv";
 import Config from "./config";
 import A from './entity/A'
+import Timer from "./timer";
 
 dotenv.config({ path: '.env' })
 const app = App();
 const config = new Config();
+const timer = new Timer();
 
 app.use(function (req: App.Request, res: App.Response, next: App.NextFunction) {
   req.dbConnection = config.dbConnection;
-  next();
+  res.on('finish', function() {
+    timer.stop();
+  });
+  timer.start(req.url);
+  next()
 })
 
 app.get('/', async function (req, res) {
-  const a = await req.dbConnection.getRepository(A).find()
-  return res.status(200).json(a);
+  const queryBuilder = req.dbConnection.getRepository(A).createQueryBuilder('a')
+  queryBuilder.leftJoinAndSelect('a.bs', 'b');
+
+  const r = await queryBuilder.getMany();
+  return res.status(200).json(r);
 })
 
 app.get('/filtered', async function (req, res) {
@@ -48,7 +57,6 @@ app.get('/paginated-ordered-custom-join', async function (req, res) {
   queryBuilder.leftJoinAndSelect('a.bs', 'b');
 
   queryBuilder.addOrderBy('b-filtered.value');
-  queryBuilder.addOrderBy('a.id');
 
   queryBuilder.skip((page - 1) * item);
   queryBuilder.take(item);
@@ -73,7 +81,7 @@ app.get('/paginated-ordered-workaround', async function (req, res) {
     queryBuilder.leftJoinAndSelect('a.bs', 'b');
     queryBuilder.addOrderBy(
       `CASE
-        WHEN "b"."key" = '1' THEN 0
+        WHEN "b"."key" = '1' THEN "b"."value"
         ELSE NULL
       END
     `, 'ASC');
@@ -93,7 +101,6 @@ app.get('/paginated-ordered-workaround', async function (req, res) {
   queryBuilder.skip((page - 1) * item);
   queryBuilder.take(item);
 
-  console.log(queryBuilder.getSql());
   const r = await queryBuilder.getMany();
   return res.status(200).json(r);
 })
@@ -107,7 +114,7 @@ app.get('/paginated-ordered-test', async function (req, res) {
 
   queryBuilder.addSelect(
     `CASE
-      WHEN "b"."key" = '1' THEN 0
+      WHEN "b"."key" = '1' THEN "b"."value"
       ELSE NULL
     END
   `, 'ordered_key');
@@ -129,7 +136,7 @@ app.get('/paginated-ordered', async function (req, res) {
   queryBuilder.leftJoinAndSelect('a.bs', 'b');
   queryBuilder.addOrderBy(
     `CASE
-      WHEN "b"."key" = '1' THEN 0
+      WHEN "b"."key" = '1' THEN "b"."value"
       ELSE NULL
     END
   `, 'ASC');
